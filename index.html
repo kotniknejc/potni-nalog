@@ -92,8 +92,9 @@
   .save-state {
     font-size: 12px; font-weight: 600; color: #2e7d4f;
     background: #e6f5ec; border: 1px solid #bfe6cd; border-radius: 20px;
-    padding: 5px 12px; opacity: 0.35; transition: opacity .3s; white-space: nowrap;
+    padding: 5px 12px; opacity: 0.35; transition: opacity .3s, color .3s, background .3s; white-space: nowrap;
   }
+  .cloud-state { opacity: 1; }
 
   .local-banner {
     background: #fff6e6; border: 1px solid #f0d9a8; border-left: 4px solid #d8a441;
@@ -325,6 +326,7 @@
       <input id="plate" type="text" placeholder="NM AB-123">
     </div>
     <div class="spacer"></div>
+    <span id="cloudState" class="save-state cloud-state">☁︎</span>
     <span id="saveState" class="save-state">Shranjeno ✓</span>
     <div class="month-nav">
       <button id="todayBtn" class="today-btn" title="Skoči na danes">Danes</button>
@@ -839,6 +841,83 @@ function getPlace(name){
   return profile.places[key] || null;
 }
 
+/* ============ Supabase (oblačno shranjevanje) ============ */
+const SUPA_URL = "https://ominbjvpwearlvhojdhd.supabase.co";
+const SUPA_KEY = "sb_publishable_aEm07b8cxA3DF9dhG190JQ_PTnFzH6-";
+const SUPA_TABLE = "evidenca";
+const SUPA_ROW_ID = "glavni";           // ena vrstica hrani vse podatke
+let cloudReady = false;                  // ali je oblak dosegljiv
+let _cloudTimer = null;
+
+function supaHeaders(){
+  return {
+    "apikey": SUPA_KEY,
+    "Authorization": "Bearer " + SUPA_KEY,
+    "Content-Type": "application/json"
+  };
+}
+
+// Pull the latest saved snapshot from the cloud. Returns {data,profile} or null.
+async function cloudLoad(){
+  try {
+    const url = SUPA_URL + "/rest/v1/" + SUPA_TABLE +
+                "?id=eq." + SUPA_ROW_ID + "&select=vsebina";
+    const res = await fetch(url, { headers: supaHeaders() });
+    if(!res.ok) return null;
+    const rows = await res.json();
+    cloudReady = true;
+    if(rows && rows.length && rows[0].vsebina){
+      return rows[0].vsebina;   // already a JSON object (jsonb)
+    }
+    return { empty: true };     // cloud reachable but no data yet
+  } catch(e){
+    cloudReady = false;
+    return null;                // offline / unreachable
+  }
+}
+
+// Push the current snapshot to the cloud (upsert the single row).
+async function cloudSave(){
+  const snapshot = { data, profile, savedAt: new Date().toISOString() };
+  try {
+    const url = SUPA_URL + "/rest/v1/" + SUPA_TABLE + "?on_conflict=id";
+    const res = await fetch(url, {
+      method: "POST",
+      headers: Object.assign({}, supaHeaders(), { "Prefer": "resolution=merge-duplicates" }),
+      body: JSON.stringify({ id: SUPA_ROW_ID, vsebina: snapshot })
+    });
+    cloudReady = res.ok;
+    updateCloudBadge(res.ok ? "ok" : "err");
+    return res.ok;
+  } catch(e){
+    cloudReady = false;
+    updateCloudBadge("off");
+    return false;
+  }
+}
+
+// Debounced cloud save so typing doesn't fire a request per keystroke.
+function cloudSaveDebounced(){
+  clearTimeout(_cloudTimer);
+  updateCloudBadge("saving");
+  _cloudTimer = setTimeout(()=>{ cloudSave(); }, 900);
+}
+
+function updateCloudBadge(state){
+  const el = document.getElementById("cloudState");
+  if(!el) return;
+  const map = {
+    ok:     { t:"Sinhronizirano ☁︎", c:"#2e7d4f", bg:"#e6f5ec", bd:"#bfe6cd" },
+    saving: { t:"Shranjujem…",       c:"#0a6", bg:"#eef9fc", bd:"#c4e4ee" },
+    err:    { t:"Napaka sinhr.",     c:"#c0392b", bg:"#fdecec", bd:"#f3c0c0" },
+    off:    { t:"Brez povezave",     c:"#8a6d1e", bg:"#fff6e6", bd:"#f0d9a8" }
+  };
+  const m = map[state] || map.ok;
+  el.textContent = m.t;
+  el.style.color = m.c; el.style.background = m.bg; el.style.borderColor = m.bd;
+  el.style.opacity = "1";
+}
+
 function loadStore(){
   // Try localStorage first, then sessionStorage as a fallback (iOS Safari
   // sometimes wipes localStorage for locally-opened files).
@@ -879,6 +958,7 @@ function saveStore(){
       try { localStorage.setItem(STORAGE_KEY, payload); } catch(e){}
       try { sessionStorage.setItem(STORAGE_KEY, payload); } catch(e){}
       flashSaved();
+      cloudSaveDebounced();     // also push to the cloud
     } catch(e){ /* storage full or unavailable */ }
   }, 300);
 }
@@ -1661,6 +1741,41 @@ try {
   })();
 
   render();
+
+  // After local render, sync with the cloud so data follows you across devices.
+  (async function cloudSync(){
+    updateCloudBadge("saving");
+    const cloud = await cloudLoad();
+    if(cloud === null){
+      // Offline or unreachable — keep working locally.
+      updateCloudBadge("off");
+      return;
+    }
+    if(cloud.empty){
+      // Cloud reachable but empty — push whatever we have locally up.
+      await cloudSave();
+      return;
+    }
+    // Cloud has data — adopt it as the source of truth (multi-device).
+    if(cloud.data){
+      data = cloud.data;
+      profile = cloud.profile || profile;
+      if(!profile.places) profile.places = {};
+      if(profile.plate === undefined) profile.plate = "";
+      // reflect into fields + storage
+      document.getElementById("driver").value  = profile.driver  || "";
+      document.getElementById("vehicle").value = profile.vehicle || "";
+      document.getElementById("plate").value   = profile.plate   || "";
+      try {
+        const payload = JSON.stringify({ data, profile });
+        localStorage.setItem(STORAGE_KEY, payload);
+        sessionStorage.setItem(STORAGE_KEY, payload);
+      } catch(e){}
+      seedPlaces();
+      render();
+      updateCloudBadge("ok");
+    }
+  })();
 } catch(err){
   // Never leave a blank screen — show what went wrong
   document.body.innerHTML =
@@ -1699,4 +1814,3 @@ if("serviceWorker" in navigator && location.protocol.startsWith("http")){
 </script>
 </body>
 </html>
-
