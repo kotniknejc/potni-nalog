@@ -1088,6 +1088,7 @@ function lastOdometer(beforeY, beforeM, beforeD, beforeIdx){
 /* ------------------------------------------------------------------ */
 /*  Render                                                            */
 /* ------------------------------------------------------------------ */
+let keepOpenDay = null;   // one-shot: keep this day open for the next render only
 function render(){
   const y = view.getFullYear(), m = view.getMonth();
   document.getElementById("monthLabel").textContent = MONTHS_SL[m] + " " + y;
@@ -1128,8 +1129,9 @@ function render(){
       (locked ? '<span class="badge lock">🔒 zaključen</span>' : '') +
       (hol ? '<span class="badge hol">'+hol+'</span>' : '') +
       '<div class="day-actions"></div>';
-    // Days with trips start expanded; empty days start collapsed. Clicking toggles.
-    if(trips.length) dayEl.classList.add("open");
+    // All days start collapsed on load, for a tidy page. Clicking a day opens it.
+    // Exception: a day just given a new relation stays open for this render only.
+    if(keepOpenDay === d) dayEl.classList.add("open");
     head.addEventListener("click", () => dayEl.classList.toggle("open"));
     dayEl.appendChild(head);
 
@@ -1144,6 +1146,8 @@ function render(){
   document.getElementById("sumWork").textContent  = fmtKm(totWork) + " km";
   document.getElementById("sumPriv").textContent  = fmtKm(totPriv) + " km";
   document.getElementById("sumTotal").textContent = fmtKm(totWork+totPriv) + " km";
+
+  keepOpenDay = null;   // clear the one-shot flag; days stay collapsed next time
 }
 
 // A day is "locked" (finalized) if profile.locked has its key.
@@ -1210,6 +1214,7 @@ function buildTable(day, trips, locked){
         if(last !== null) startKm = String(last);
       }
       md[day].push({ start: startKm, end:"", dest:"", type:"work", purpose:"servis" });
+      keepOpenDay = day;   // keep just this day open through the coming re-render
       saveStore();
       render();
     });
