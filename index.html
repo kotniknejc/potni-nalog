@@ -1877,19 +1877,25 @@ try {
 /* ------------------------------------------------------------------ */
 if("serviceWorker" in navigator && location.protocol.startsWith("http")){
   const swCode = `
-    const CACHE = "potni-nalog-v1";
+    const CACHE = "potni-nalog-v2";
+    // Take over immediately and drop old caches so updates show right away.
     self.addEventListener("install", e => { self.skipWaiting(); });
-    self.addEventListener("activate", e => { self.clients.claim(); });
+    self.addEventListener("activate", e => {
+      e.waitUntil(
+        caches.keys().then(keys =>
+          Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+        ).then(() => self.clients.claim())
+      );
+    });
+    // Network-first: always try to fetch the latest; fall back to cache only offline.
     self.addEventListener("fetch", e => {
+      if(e.request.method !== "GET"){ return; }
       e.respondWith(
-        caches.open(CACHE).then(cache =>
-          cache.match(e.request).then(hit =>
-            hit || fetch(e.request).then(res => {
-              try { cache.put(e.request, res.clone()); } catch(_){}
-              return res;
-            }).catch(()=> hit)
-          )
-        )
+        fetch(e.request).then(res => {
+          const copy = res.clone();
+          caches.open(CACHE).then(cache => { try { cache.put(e.request, copy); } catch(_){} });
+          return res;
+        }).catch(() => caches.match(e.request))
       );
     });
   `;
