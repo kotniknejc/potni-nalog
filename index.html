@@ -1128,12 +1128,9 @@ function render(){
       (locked ? '<span class="badge lock">🔒 zaključen</span>' : '') +
       (hol ? '<span class="badge hol">'+hol+'</span>' : '') +
       '<div class="day-actions"></div>';
-    // Restore previously-open state so refresh / returning keeps your place.
-    if(isDayOpen(d)) dayEl.classList.add("open");
-    head.addEventListener("click", () => {
-      dayEl.classList.toggle("open");
-      setDayOpen(d, dayEl.classList.contains("open"));
-    });
+    // Days with trips start expanded; empty days start collapsed. Clicking toggles.
+    if(trips.length) dayEl.classList.add("open");
+    head.addEventListener("click", () => dayEl.classList.toggle("open"));
     dayEl.appendChild(head);
 
     const body = document.createElement("div");
@@ -1156,23 +1153,6 @@ function setDayLocked(d, val){
   if(!profile.locked) profile.locked = {};
   if(val) profile.locked[dayKeyFor(d)] = true;
   else delete profile.locked[dayKeyFor(d)];
-}
-
-// Remember which days are expanded (per month), surviving refresh/return.
-const OPEN_KEY = "inspira_open_days_v1";
-let openDays = {};   // { "YYYY-M-D": true }
-function loadOpenDays(){
-  try { openDays = JSON.parse(localStorage.getItem(OPEN_KEY) || "{}") || {}; }
-  catch(e){ openDays = {}; }
-}
-function persistOpenDays(){
-  try { localStorage.setItem(OPEN_KEY, JSON.stringify(openDays)); } catch(e){}
-}
-function isDayOpen(d){ return !!openDays[dayKeyFor(d)]; }
-function setDayOpen(d, val){
-  if(val) openDays[dayKeyFor(d)] = true;
-  else delete openDays[dayKeyFor(d)];
-  persistOpenDays();
 }
 
 function buildTable(day, trips, locked){
@@ -1230,7 +1210,6 @@ function buildTable(day, trips, locked){
         if(last !== null) startKm = String(last);
       }
       md[day].push({ start: startKm, end:"", dest:"", type:"work", purpose:"servis" });
-      setDayOpen(day, true);   // keep this day open across the re-render
       saveStore();
       render();
     });
@@ -1244,7 +1223,6 @@ function buildTable(day, trips, locked){
       finish.addEventListener("click", ()=>{
         confirmBox("Zaključim dan "+day+"."+(view.getMonth()+1)+".? Po zaključku dneva ne bo več mogoče spreminjati (lahko ga kasneje odkleneš).", ()=>{
           setDayLocked(day, true);
-          setDayOpen(day, false);   // collapse the finished day
           saveStore(); render();
         });
       });
@@ -1865,7 +1843,6 @@ document.getElementById("plate").addEventListener("input", saveStore);
 try {
   (function init(){
     const hadData = loadStore();
-    loadOpenDays();   // restore which days were expanded
     if(!hadData){
       // First run — seed the example so the app isn't empty
       const y=2026, m=6; // July 2026
