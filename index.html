@@ -837,19 +837,26 @@ function seedPlaces(){
     const key = k.toLowerCase();
     if(!profile.places[key]) profile.places[key] = { name:k, ...seed[k] };
   }
+  // One-time repair: "Pisarna" is a private destination by nature. If an earlier
+  // bug flipped it to work, restore the sensible default (user can still change it).
+  if(!profile._repaired_v1){
+    if(profile.places["pisarna"]) profile.places["pisarna"].type = "priv";
+    profile._repaired_v1 = true;
+  }
 }
 
-// Remember a relation the user has used, keeping its latest type/purpose and
-// bumping a frequency counter so the most-used ones surface first.
-function rememberPlace(name, type, purpose){
+// Remember a relation the user has used. Keeps the existing type/purpose unless
+// the caller explicitly passes a new one via `explicit`, so casual blur events
+// never silently flip a relation (e.g. Pisarna) from private to work.
+function rememberPlace(name, type, purpose, explicit){
   name = (name||"").trim();
   if(!name) return;
   const key = name.toLowerCase();
   const ex = profile.places[key];
   profile.places[key] = {
     name: name,
-    type: type || (ex && ex.type) || "work",
-    purpose: purpose || (ex && ex.purpose) || "servis",
+    type:    (explicit && type)    ? type    : (ex && ex.type)    || type    || "work",
+    purpose: (explicit && purpose) ? purpose : (ex && ex.purpose) || purpose || "servis",
     count: (ex && ex.count ? ex.count : 0) + 1
   };
 }
@@ -1305,12 +1312,15 @@ function buildRow(day, idx, t, locked){
     t.type = sel.value;
     if(sel.value === "work" && !t.purpose) { t.purpose = "servis"; selP.value = "servis"; }
     applyTypeVisibility();
-    rememberPlace(inDest.value, t.type, t.purpose);
-    saveStore(); render();
+    rememberPlace(inDest.value, t.type, t.purpose, true);   // explicit user choice
+    // update row styling (priv/work) in place instead of full re-render
+    tr.className = (t.type === "priv") ? "priv-row" : "";
+    updateRowLive(tr, t);
+    saveStore();
   });
   selP.addEventListener("change", ()=>{
     t.purpose = selP.value;
-    rememberPlace(inDest.value, t.type, t.purpose);
+    rememberPlace(inDest.value, t.type, t.purpose, true);   // explicit user choice
     saveStore();
   });
 
@@ -1325,9 +1335,10 @@ function buildRow(day, idx, t, locked){
     sel.value = t.type;
     if(t.type === "work"){ t.purpose = p.purpose || "servis"; selP.value = t.purpose; }
     applyTypeVisibility();
-    rememberPlace(p.name, t.type, t.purpose);
+    rememberPlace(p.name, t.type, t.purpose, true);
+    tr.className = (t.type === "priv") ? "priv-row" : "";
     closeAc();
-    saveStore(); render();
+    saveStore();
   }
   function openAc(){
     const matches = suggestPlaces(inDest.value);
@@ -1348,8 +1359,8 @@ function buildRow(day, idx, t, locked){
   inDest.addEventListener("input", ()=>{ t.dest = inDest.value; openAc(); saveStore(); });
   inDest.addEventListener("focus", ()=>{ if(inDest.value.trim()) openAc(); });
   inDest.addEventListener("blur", ()=>{
-    // remember whatever was typed, then close after a tick so clicks register
-    rememberPlace(inDest.value, t.type, t.purpose);
+    // remember whatever was typed (without overwriting a known type), then close
+    rememberPlace(inDest.value, t.type, t.purpose, false);
     setTimeout(closeAc, 150);
     saveStore();
   });
