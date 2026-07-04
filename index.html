@@ -1121,7 +1121,12 @@ function render(){
       (locked ? '<span class="badge lock">🔒 zaključen</span>' : '') +
       (hol ? '<span class="badge hol">'+hol+'</span>' : '') +
       '<div class="day-actions"></div>';
-    head.addEventListener("click", () => dayEl.classList.toggle("open"));
+    // Restore previously-open state so refresh / returning keeps your place.
+    if(isDayOpen(d)) dayEl.classList.add("open");
+    head.addEventListener("click", () => {
+      dayEl.classList.toggle("open");
+      setDayOpen(d, dayEl.classList.contains("open"));
+    });
     dayEl.appendChild(head);
 
     const body = document.createElement("div");
@@ -1144,6 +1149,23 @@ function setDayLocked(d, val){
   if(!profile.locked) profile.locked = {};
   if(val) profile.locked[dayKeyFor(d)] = true;
   else delete profile.locked[dayKeyFor(d)];
+}
+
+// Remember which days are expanded (per month), surviving refresh/return.
+const OPEN_KEY = "inspira_open_days_v1";
+let openDays = {};   // { "YYYY-M-D": true }
+function loadOpenDays(){
+  try { openDays = JSON.parse(localStorage.getItem(OPEN_KEY) || "{}") || {}; }
+  catch(e){ openDays = {}; }
+}
+function persistOpenDays(){
+  try { localStorage.setItem(OPEN_KEY, JSON.stringify(openDays)); } catch(e){}
+}
+function isDayOpen(d){ return !!openDays[dayKeyFor(d)]; }
+function setDayOpen(d, val){
+  if(val) openDays[dayKeyFor(d)] = true;
+  else delete openDays[dayKeyFor(d)];
+  persistOpenDays();
 }
 
 function buildTable(day, trips, locked){
@@ -1201,10 +1223,9 @@ function buildTable(day, trips, locked){
         if(last !== null) startKm = String(last);
       }
       md[day].push({ start: startKm, end:"", dest:"", type:"work", purpose:"servis" });
+      setDayOpen(day, true);   // keep this day open across the re-render
       saveStore();
       render();
-      // keep this day open after re-render
-      setTimeout(()=>{ const els=document.querySelectorAll('#days .day'); if(els[day-1]) els[day-1].classList.add('open'); },0);
     });
     btnRow.appendChild(add);
 
@@ -1216,6 +1237,7 @@ function buildTable(day, trips, locked){
       finish.addEventListener("click", ()=>{
         confirmBox("Zaključim dan "+day+"."+(view.getMonth()+1)+".? Po zaključku dneva ne bo več mogoče spreminjati (lahko ga kasneje odkleneš).", ()=>{
           setDayLocked(day, true);
+          setDayOpen(day, false);   // collapse the finished day
           saveStore(); render();
         });
       });
@@ -1349,7 +1371,8 @@ function buildRow(day, idx, t, locked){
   inS.type="text"; inS.inputMode="decimal"; inS.placeholder="89560"; inS.value=t.start||"";
   if(locked) inS.disabled = true;
   inS.addEventListener("input", ()=>{ t.start = inS.value; updateRowLive(tr, t); saveStore(); });
-  inS.addEventListener("blur", ()=>{ render(); });
+  inS.addEventListener("blur", ()=>{ updateRowLive(tr, t); refreshTotals(); });
+  inS.addEventListener("keydown", (ev)=>{ if(ev.key==="Enter"){ ev.preventDefault(); inS.blur(); } });
   tdS.appendChild(inS); tr.appendChild(tdS);
 
   // End
@@ -1359,7 +1382,8 @@ function buildRow(day, idx, t, locked){
   inE.type="text"; inE.inputMode="decimal"; inE.placeholder="89702"; inE.value=t.end||"";
   if(locked) inE.disabled = true;
   inE.addEventListener("input", ()=>{ t.end = inE.value; updateRowLive(tr, t); saveStore(); });
-  inE.addEventListener("blur", ()=>{ render(); });
+  inE.addEventListener("blur", ()=>{ updateRowLive(tr, t); refreshTotals(); });
+  inE.addEventListener("keydown", (ev)=>{ if(ev.key==="Enter"){ ev.preventDefault(); inE.blur(); } });
   tdE.appendChild(inE); tr.appendChild(tdE);
 
   // Km
@@ -1408,6 +1432,35 @@ function updateRowLive(tr, t){
     kmCell.textContent = "—";
     kmCell.style.color = "#9bb0c4";
   }
+}
+
+// Recompute the three summary totals (and the open day's header km) without
+// rebuilding the whole list — so editing never collapses open days.
+function refreshTotals(){
+  const y = view.getFullYear(), m = view.getMonth();
+  const md = ensureMonth();
+  const daysInMonth = new Date(y, m+1, 0).getDate();
+  let totWork=0, totPriv=0;
+  for(let d=1; d<=daysInMonth; d++){
+    const trips = md[d] || [];
+    let dayKm = 0;
+    trips.forEach(t=>{
+      const s=num(t.start), e=num(t.end);
+      if(s!==null && e!==null && e>=s){
+        const km=e-s; dayKm+=km;
+        if(t.type==="priv") totPriv+=km; else totWork+=km;
+      }
+    });
+    // Update this day's header km label if the day is currently in the DOM
+    const dayEl = document.querySelectorAll('#days .day')[d-1];
+    if(dayEl){
+      const kmLabel = dayEl.querySelector('.day-head .day-km');
+      if(kmLabel) kmLabel.textContent = fmtKm(dayKm) + ' km';
+    }
+  }
+  document.getElementById("sumWork").textContent  = fmtKm(totWork) + " km";
+  document.getElementById("sumPriv").textContent  = fmtKm(totPriv) + " km";
+  document.getElementById("sumTotal").textContent = fmtKm(totWork+totPriv) + " km";
 }
 
 /* ------------------------------------------------------------------ */
@@ -1801,6 +1854,7 @@ document.getElementById("plate").addEventListener("input", saveStore);
 try {
   (function init(){
     const hadData = loadStore();
+    loadOpenDays();   // restore which days were expanded
     if(!hadData){
       // First run — seed the example so the app isn't empty
       const y=2026, m=6; // July 2026
