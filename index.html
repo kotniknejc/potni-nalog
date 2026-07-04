@@ -40,15 +40,15 @@
     min-height: 100vh;
     -webkit-font-smoothing: antialiased;
   }
-  .wrap { max-width: 1080px; margin: 0 auto; padding: 24px 20px 80px; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 14px 16px 60px; }
 
   /* Header */
   header.app {
-    display: flex; align-items: center; gap: 18px;
+    display: flex; align-items: center; gap: 14px;
     background: linear-gradient(135deg, #006599 0%, #004a72 55%, #003a5c 100%);
     border: 1px solid rgba(36,190,216,.35);
-    border-radius: 18px;
-    padding: 20px 24px;
+    border-radius: 14px;
+    padding: 12px 16px;
     box-shadow: 0 10px 40px rgba(0,58,92,.28), inset 0 1px 0 rgba(255,255,255,.08);
     position: relative; overflow: hidden;
   }
@@ -59,15 +59,15 @@
     pointer-events: none;
   }
   .logo-img {
-    height: 46px; width: auto; flex-shrink: 0; position: relative; z-index: 1;
+    height: 36px; width: auto; flex-shrink: 0; position: relative; z-index: 1;
     filter: drop-shadow(0 2px 8px rgba(0,0,0,.25));
   }
   .brand { position: relative; z-index: 1; }
   .brand h1 {
-    margin: 0; font-size: 21px; font-weight: 700; color: #ffffff;
+    margin: 0; font-size: 18px; font-weight: 700; color: #ffffff;
     letter-spacing: .2px;
   }
-  .brand p { margin: 3px 0 0; font-size: 13px; color: #b6e6f2; }
+  .brand p { margin: 2px 0 0; font-size: 11px; color: #b6e6f2; }
   .brand .co { font-weight: 700; color: #24bed8; }
 
   /* Toolbar */
@@ -146,19 +146,19 @@
   .month-label { min-width: 190px; text-align: center; font-weight: 700; font-size: 16px; color: var(--blue-900); text-transform: capitalize; }
 
   /* Summary cards */
-  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 20px 0 24px; }
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 12px 0 14px; }
   .card {
     background: rgba(255,255,255,.85); backdrop-filter: blur(6px);
-    border: 1px solid var(--line); border-radius: 16px;
-    padding: 18px 20px; box-shadow: var(--shadow);
+    border: 1px solid var(--line); border-radius: 12px;
+    padding: 10px 12px; box-shadow: var(--shadow);
     position: relative; overflow: hidden; transition: transform .15s, box-shadow .15s;
   }
   .card:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(0,101,153,.16); }
   .card::before {
     content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
   }
-  .card .k { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); }
-  .card .v { font-size: 27px; font-weight: 800; margin-top: 4px; color: var(--blue-900); letter-spacing: -.3px; }
+  .card .k { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .3px; color: var(--muted); }
+  .card .v { font-size: 19px; font-weight: 800; margin-top: 2px; color: var(--blue-900); letter-spacing: -.3px; white-space: nowrap; }
   .card.work::before { background: linear-gradient(90deg, #24bed8, #0a86c4); }
   .card.priv::before { background: linear-gradient(90deg, #e0a34a, #c17d2b); }
   .card.total::before { background: linear-gradient(90deg, #006599, #003a5c); }
@@ -173,6 +173,7 @@
   }
   .day.holiday { background: var(--blue-050); }
   .day.weekend { background: #fbfdff; }
+  .day.locked { background: #f6f8fa; border-color: #d7dfe6; }
   .day-head {
     display: flex; align-items: center; gap: 12px; padding: 12px 18px;
     border-bottom: 1px solid var(--line); cursor: pointer; user-select: none;
@@ -185,11 +186,34 @@
     background: var(--blue-100); color: var(--blue-700); text-transform: uppercase; letter-spacing: .3px;
   }
   .badge.hol { background: #fde8e8; color: #b02a2a; }
+  .badge.lock { background: #e7edf2; color: #5b7387; }
   .day-actions { margin-left: auto; display: flex; align-items: center; gap: 10px; }
   .chev { color: var(--muted); font-size: 13px; transition: transform .15s; }
   .day.open .chev { transform: rotate(90deg); }
   .day-body { display: none; padding: 6px 16px 16px; }
   .day.open .day-body { display: block; }
+
+  /* Day action buttons */
+  .day-btns { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+  .finish-day {
+    font-size: 13px; font-weight: 700; color: #fff;
+    background: linear-gradient(135deg, #2e9e63, #1f7d4c); border: none; border-radius: 9px;
+    padding: 8px 14px; cursor: pointer;
+  }
+  .finish-day:hover { filter: brightness(1.06); }
+  .locked-note {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+    margin-top: 8px; padding: 10px 14px; background: #eef2f6; border: 1px solid #d7dfe6;
+    border-radius: 10px; color: #5b7387; font-size: 13px; font-weight: 600;
+  }
+  .btn-unlock {
+    font-size: 12px; font-weight: 700; color: var(--blue-700);
+    background: #fff; border: 1px solid var(--line); border-radius: 8px;
+    padding: 7px 12px; cursor: pointer;
+  }
+  .btn-unlock:hover { background: var(--blue-050); }
+  input:disabled, select:disabled { opacity: .7; cursor: not-allowed; background: #f0f3f6 !important; }
+
 
   /* Trip rows */
   table.trips { width: 100%; border-collapse: collapse; margin-top: 6px; }
@@ -272,7 +296,10 @@
   .foot { text-align: center; color: var(--muted); font-size: 12px; margin-top: 18px; }
 
   @media (max-width: 720px) {
-    .cards { grid-template-columns: 1fr; }
+    .cards { grid-template-columns: repeat(3, 1fr); gap: 7px; }
+    .card { padding: 8px 9px; }
+    .card .v { font-size: 16px; }
+    .card .k { font-size: 9px; }
     .day-date { min-width: auto; }
     table.trips thead { display: none; }
     table.trips, table.trips tbody, table.trips tr, table.trips td { display: block; width: 100%; }
@@ -1069,6 +1096,7 @@ function render(){
     const dow = date.getDay();
     const hol = holidayName(date);
     const trips = md[d] || [];
+    const locked = isDayLocked(d);
 
     let dayKm = 0;
     trips.forEach(t => {
@@ -1081,7 +1109,8 @@ function render(){
 
     const dayEl = document.createElement("div");
     dayEl.className = "day" + (hol ? " holiday" : (dow===0||dow===6 ? " weekend" : ""));
-    if(trips.length) dayEl.classList.add("open");
+    if(locked) dayEl.classList.add("locked");
+    // Days start collapsed on every render, so the page stays tidy on refresh.
 
     const head = document.createElement("div");
     head.className = "day-head";
@@ -1089,6 +1118,7 @@ function render(){
       '<span class="chev">▶</span>' +
       '<span class="day-date">' + DAYS_SL[dow] + ' ' + d + '.' + (m+1) + '.</span>' +
       (dayKm>0 ? '<span class="day-km">'+fmtKm(dayKm)+' km</span>' : '<span class="badge" style="background:#eef4f9;color:#88a">brez poti</span>') +
+      (locked ? '<span class="badge lock">🔒 zaključen</span>' : '') +
       (hol ? '<span class="badge hol">'+hol+'</span>' : '') +
       '<div class="day-actions"></div>';
     head.addEventListener("click", () => dayEl.classList.toggle("open"));
@@ -1096,7 +1126,7 @@ function render(){
 
     const body = document.createElement("div");
     body.className = "day-body";
-    body.appendChild(buildTable(d, trips));
+    body.appendChild(buildTable(d, trips, locked));
     dayEl.appendChild(body);
 
     container.appendChild(dayEl);
@@ -1107,7 +1137,16 @@ function render(){
   document.getElementById("sumTotal").textContent = fmtKm(totWork+totPriv) + " km";
 }
 
-function buildTable(day, trips){
+// A day is "locked" (finalized) if profile.locked has its key.
+function dayKeyFor(d){ return view.getFullYear()+"-"+(view.getMonth()+1)+"-"+d; }
+function isDayLocked(d){ return !!(profile.locked && profile.locked[dayKeyFor(d)]); }
+function setDayLocked(d, val){
+  if(!profile.locked) profile.locked = {};
+  if(val) profile.locked[dayKeyFor(d)] = true;
+  else delete profile.locked[dayKeyFor(d)];
+}
+
+function buildTable(day, trips, locked){
   const tbl = document.createElement("table");
   tbl.className = "trips";
   tbl.innerHTML =
@@ -1122,36 +1161,73 @@ function buildTable(day, trips){
     '</tr></thead>';
   const tb = document.createElement("tbody");
 
-  trips.forEach((t, idx) => tb.appendChild(buildRow(day, idx, t)));
+  trips.forEach((t, idx) => tb.appendChild(buildRow(day, idx, t, locked)));
   tbl.appendChild(tb);
-
-  const add = document.createElement("button");
-  add.className = "add-trip";
-  add.textContent = "+ Dodaj relacijo";
-  add.addEventListener("click", () => {
-    const md = ensureMonth();
-    if(!md[day]) md[day] = [];
-    // Pre-fill start km: first try previous trip same day, else last odometer anywhere before
-    const prev = md[day][md[day].length-1];
-    let startKm = prev && prev.end ? prev.end : "";
-    if(startKm === ""){
-      const last = lastOdometer(view.getFullYear(), view.getMonth(), day, md[day].length);
-      if(last !== null) startKm = String(last);
-    }
-    md[day].push({ start: startKm, end:"", dest:"", type:"work", purpose:"servis" });
-    saveStore();
-    render();
-    // keep the day open + focus
-    setTimeout(()=>{ const rows=document.querySelectorAll('#days .day')[day-1]; if(rows) rows.classList.add('open'); },0);
-  });
 
   const wrap = document.createElement("div");
   wrap.appendChild(tbl);
-  wrap.appendChild(add);
+
+  if(locked){
+    // Locked day: no editing, just an "unlock" option.
+    const lockedNote = document.createElement("div");
+    lockedNote.className = "locked-note";
+    lockedNote.innerHTML = '<span>🔒 Dan je zaključen in zaklenjen.</span>';
+    const unlock = document.createElement("button");
+    unlock.className = "btn-unlock";
+    unlock.textContent = "Odkleni dan";
+    unlock.addEventListener("click", ()=>{
+      confirmBox("Odklenem ta dan za urejanje?", ()=>{
+        setDayLocked(day, false);
+        saveStore(); render();
+      });
+    });
+    lockedNote.appendChild(unlock);
+    wrap.appendChild(lockedNote);
+  } else {
+    // Editable day: add-relation + finish-day buttons.
+    const btnRow = document.createElement("div");
+    btnRow.className = "day-btns";
+
+    const add = document.createElement("button");
+    add.className = "add-trip";
+    add.textContent = "+ Dodaj relacijo";
+    add.addEventListener("click", () => {
+      const md = ensureMonth();
+      if(!md[day]) md[day] = [];
+      const prev = md[day][md[day].length-1];
+      let startKm = prev && prev.end ? prev.end : "";
+      if(startKm === ""){
+        const last = lastOdometer(view.getFullYear(), view.getMonth(), day, md[day].length);
+        if(last !== null) startKm = String(last);
+      }
+      md[day].push({ start: startKm, end:"", dest:"", type:"work", purpose:"servis" });
+      saveStore();
+      render();
+      // keep this day open after re-render
+      setTimeout(()=>{ const els=document.querySelectorAll('#days .day'); if(els[day-1]) els[day-1].classList.add('open'); },0);
+    });
+    btnRow.appendChild(add);
+
+    // "Zaključi dan" only makes sense if there is at least one trip
+    if(trips.length){
+      const finish = document.createElement("button");
+      finish.className = "finish-day";
+      finish.textContent = "✓ Zaključi dan";
+      finish.addEventListener("click", ()=>{
+        confirmBox("Zaključim dan "+day+"."+(view.getMonth()+1)+".? Po zaključku dneva ne bo več mogoče spreminjati (lahko ga kasneje odkleneš).", ()=>{
+          setDayLocked(day, true);
+          saveStore(); render();
+        });
+      });
+      btnRow.appendChild(finish);
+    }
+
+    wrap.appendChild(btnRow);
+  }
   return wrap;
 }
 
-function buildRow(day, idx, t){
+function buildRow(day, idx, t, locked){
   const tr = document.createElement("tr");
   if(t.type === "priv") tr.className = "priv-row";
 
@@ -1170,6 +1246,7 @@ function buildRow(day, idx, t){
   const inDest = document.createElement("input");
   inDest.type="text"; inDest.placeholder="npr. Novo mesto"; inDest.value=t.dest||"";
   inDest.autocomplete = "off";
+  if(locked) inDest.disabled = true;
   const acList = document.createElement("div");
   acList.className = "ac-list";
   destWrap.appendChild(inDest);
@@ -1180,6 +1257,7 @@ function buildRow(day, idx, t){
   const tdType = document.createElement("td");
   tdType.setAttribute("data-l","Namen");
   const sel = document.createElement("select");
+  if(locked) sel.disabled = true;
   sel.innerHTML = '<option value="work">Službeno</option><option value="priv">Zasebno</option>';
   sel.value = t.type || "work";
   tdType.appendChild(sel); tr.appendChild(tdType);
@@ -1194,6 +1272,7 @@ function buildRow(day, idx, t){
     '<option value="dostava">Dostava materiala</option>';
   selP.value = t.purpose || "servis";
   selP.style.display = (sel.value === "work") ? "" : "none";
+  if(locked) selP.disabled = true;
   tdPurpose.appendChild(selP); tr.appendChild(tdPurpose);
 
   // --- interactions ---
@@ -1268,6 +1347,7 @@ function buildRow(day, idx, t){
   tdS.setAttribute("data-l","Začetni km"); tdS.className="col-km";
   const inS = document.createElement("input");
   inS.type="text"; inS.inputMode="decimal"; inS.placeholder="89560"; inS.value=t.start||"";
+  if(locked) inS.disabled = true;
   inS.addEventListener("input", ()=>{ t.start = inS.value; updateRowLive(tr, t); saveStore(); });
   inS.addEventListener("blur", ()=>{ render(); });
   tdS.appendChild(inS); tr.appendChild(tdS);
@@ -1277,6 +1357,7 @@ function buildRow(day, idx, t){
   tdE.setAttribute("data-l","Končni km"); tdE.className="col-km";
   const inE = document.createElement("input");
   inE.type="text"; inE.inputMode="decimal"; inE.placeholder="89702"; inE.value=t.end||"";
+  if(locked) inE.disabled = true;
   inE.addEventListener("input", ()=>{ t.end = inE.value; updateRowLive(tr, t); saveStore(); });
   inE.addEventListener("blur", ()=>{ render(); });
   tdE.appendChild(inE); tr.appendChild(tdE);
@@ -1291,16 +1372,19 @@ function buildRow(day, idx, t){
   // Delete
   const tdDel = document.createElement("td");
   tdDel.className="no-l";
-  const del = document.createElement("button");
-  del.className="del-btn"; del.innerHTML="✕"; del.title="Izbriši relacijo";
-  del.addEventListener("click", ()=>{
-    const md = ensureMonth();
-    md[day].splice(idx,1);
-    if(md[day].length===0) delete md[day];
-    saveStore();
-    render();
-  });
-  tdDel.appendChild(del); tr.appendChild(tdDel);
+  if(!locked){
+    const del = document.createElement("button");
+    del.className="del-btn"; del.innerHTML="✕"; del.title="Izbriši relacijo";
+    del.addEventListener("click", ()=>{
+      const md = ensureMonth();
+      md[day].splice(idx,1);
+      if(md[day].length===0) delete md[day];
+      saveStore();
+      render();
+    });
+    tdDel.appendChild(del);
+  }
+  tr.appendChild(tdDel);
 
   return tr;
 }
@@ -1697,12 +1781,13 @@ document.getElementById("todayBtn").addEventListener("click", ()=>{
   const now = new Date();
   view = new Date(now.getFullYear(), now.getMonth(), 1);
   render();
-  // Open today's day and scroll it into view
+  // Open today's day in the list and scroll to it
   setTimeout(()=>{
-    const dayEl = document.querySelectorAll('#days .day')[now.getDate()-1];
-    if(dayEl){
-      dayEl.classList.add('open');
-      dayEl.scrollIntoView({ behavior:"smooth", block:"center" });
+    const els = document.querySelectorAll('#days .day');
+    const el = els[now.getDate()-1];
+    if(el){
+      el.classList.add('open');
+      el.scrollIntoView({ behavior:"smooth", block:"center" });
     }
   }, 30);
 });
